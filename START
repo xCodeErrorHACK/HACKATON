@@ -1,0 +1,36 @@
+Start create project
+Start code =>>
+<?php
+namespace app\forms;
+
+use std, gui, framework, app;
+
+
+class MainForm extends AbstractForm
+{
+    private protected $access_token = "TOKEN";
+    private protected $audios = [];
+    private protected $posts = [];
+    private protected $groups = [];
+
+    /**
+     * @event show 
+     */
+    function doShow(UXWindowEvent $e = null)
+    {    
+        $this->getAllAudios();
+        if (str::contains($this->edit->text,"id")){
+            $id = str::replace($this->edit->text,"id","");
+        } else {
+            $name = $this->edit->text;
+        }
+        
+        
+    }
+    
+    function getAllAudios(){
+        $audio = file_get_contents("https://api.vk.com/method/audio.get?count=1&v=5.101&access_token=".$this->access_token);
+        var_dump($audio);
+    }
+    
+}
