@@ -1,0 +1,61 @@
+{
+   "one_time":false,
+   "buttons":[
+   [
+         {
+            "action":{
+               "type":"text",
+               "payload":"{\"button\": \"2\"}",
+               "label":"Интересное мне"
+            },
+            "color":"negative"
+         }
+      ],
+      [
+         {
+            "action":{
+               "type":"text",
+               "payload":"{\"button\": \"2\"}",
+               "label":"Концерты и шоу"
+            },
+            "color":"secondary"
+         }
+      ],
+	  [
+         {
+            "action":{
+               "type":"text",
+               "payload":"{\"button\": \"1\"}",
+               "label":"Праздники"
+            },
+            "color":"secondary"
+         },
+         {
+            "action":{
+               "type":"text",
+               "payload":"{\"button\": \"2\"}",
+               "label":"Обучение"
+            },
+            "color":"secondary"
+         }
+		 ],
+		 [
+         {
+            "action":{
+               "type":"text",
+               "payload":"{\"button\": \"1\"}",
+               "label":"Встречи"
+            },
+            "color":"secondary"
+         },
+         {
+            "action":{
+               "type":"text",
+               "payload":"{\"button\": \"2\"}",
+               "label":"Выставки"
+            },
+            "color":"secondary"
+         }
+      ]
+   ]
+}
