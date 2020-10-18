@@ -1,0 +1,310 @@
+
+//GROUP_TOKEN - Токен группы к которой идёт привязка бота
+//USER_TOKEN - Токен пользователя с которого проверяется информация
+<?php
+namespace app\forms;
+
+use std, gui, framework, app;
+
+
+class MainForm extends AbstractForm
+{
+
+    private protected $lastMessages = [];
+    /**
+     * @event show 
+     */
+    function doShow(UXWindowEvent $e = null)
+    {    
+    $thread = new Thread(function(){
+            $ts = 1;
+            $bl = false;
+        while (true){
+            if (!$bl){
+                $long = file_get_contents("https://api.vk.com/method/groups.getLongPollServer?group_id=199534393&v=5.124&access_token=GROUP_TOKEN");
+            $long = json_decode($long,true);
+                $bl = true;
+                $this->textArea->appendText("\nОбновлён сервер для получения уведомлений");
+                if ($long["response"]["server"]){
+                uiLater(function(){
+                    $this->textArea->appendText(" ===>>> Удачно");
+                    });
+                } else {
+                    uiLater(function(){
+                    $this->textArea->appendText(" ===>>> Неудачно");
+                    });
+                }
+            }
+            $updates = file_get_contents($long["response"]["server"]."?act=a_check&key=".$long["response"]["key"]."&wait=1&ts=$ts");
+            $json = json_decode($updates,true);
+            $ts = $json["ts"];
+                if (!$json["updates"]){
+                    Wait(100);
+                    continue;
+                }
+                if ($json["failed"]){
+                    $bl = false;
+                    continue;
+                }
+                $id = $json["updates"][0]["object"]["user_id"];
+                $text = $json["updates"][0]["object"]["body"];
+                if (!file_exists("Users/$id") && $text == "Начать" or !file_exists("Users/$id") && $text == "начать"){
+                    $txt = "START:::::";
+                    file_put_contents("Users/$id",$txt);
+                    $this->sendMessage($id,"Напишите свой возраст для продолжения");
+                    continue;
+                }
+                if (!file_exists("Users/$id")){
+                    Wait(100);
+                    continue;
+                }
+                $cont = file_get_contents("Users/$id");
+                $json = explode(":::::",$cont);
+                if (!$json[1]){
+                    if (is_numeric($text)){
+                        $cont .= $text;
+                    file_put_contents("Users/$id",$cont);
+                    $out = $this->checkGroups($id);
+                    uiLater(function()use($id){
+                    $this->textArea->appendText("Новый пользователь с ID: $id");
+                    });
+                    if (!$out){
+                        $this->sendMessage($id,"Отсутствуют данные о ваших группах, невозможно сформивать рекомендации для вас!\nВыберите или введите поисковой запрос, мы для вас выберем мероприятие!");
+                    } else {
+                        $this->sendMessage($id,"Можем для вас порекомендовать данные направления: " . implode("\n",$out) . "\n нажмите 'Интересное мне'\тЕсли вам не интересны они, то выберите категории по кнопкам.");
+                        }
+                    } else {
+                        $this->sendMessage($id,"В данных о возрасте должны содержаться только цифры!");
+                    }
+                } else {
+                    if ($text == "Интересное мне"){
+                    $this->sendMessage($id,"Ищу интересное вам, подождите...");
+                     $out = $this->checkGroups($id);
+                     if ($out){
+                         if (count(explode("",$out[0])) < 2){
+                             $this->sendMessage($id,"Исходя из ваших предпочтений не найдено ни одного события :(");
+                         } else {
+                             foreach ($out as $itee){
+                                $this->snd($itee,$id);
+                            }
+                        }
+                     } else {
+                     $this->sendMessage($id,"Откройте доступ к группам для всех в своём аккаунте VK либо добавьте хоть одну группу для получения информации об интересном!");
+                     }
+                     continue;
+                    }
+                    $content = file_get_contents("json.txt");
+                    $lines = str::lines($content);
+                     $cont = file_get_contents("Users/$id");
+                    $json = json_decode($cont,true);
+                    $json = explode(":::::",$json);
+                    $age = $json[1];
+                    $arr = [];
+                    foreach ($lines as $line){
+                        if ($line["ageRestriction"] > $age){
+                            break;
+                        }
+                        $line = json_decode($line,true);
+                        $name = $line["name"];
+                        $ex = explode("«",$name);
+                        $e = explode(" ",$ex[0]);
+                        foreach ($e as $eee){
+                            if (str::equalsIgnoreCase($eee,$text)){
+                                $eee = trim($eee);
+                                array_push($arr,$line["name"]."\n".$line["description"]."\nСостоится в: " . $line["organization"]["name"]."\n");
+                                break;
+                            }
+                        }
+                        
+                        if (str::equalsIgnoreCase($line["category"]["name"],$text)){
+                            array_push($arr,$line["name"]."\n".$line["description"]."\nСостоится в: " . $line["organization"]["name"]."\n");
+                        } else {
+                            $out = $this->string_compare($line["category"]["name"],$text);
+                            $out = $out * 100;
+                            if ($out > 65){
+                                array_push($arr,$line["name"]."\n".$line["description"]."\nСостоится в: " . $line["organization"]["name"]."\n");
+                            }
+                        }
+                    }
+                    if (!$arr[0]){
+                        $teks = $content = file_get_contents("json.txt");
+                        $lines = str::lines($content);
+                        $arrr = [];
+                        foreach ($lines as $line){
+                            $a = 0;
+                            $line = json_decode($line,true);
+                            $ln = $line["category"]["name"];
+                            foreach ($arrr as $it){
+                                if ($it == $ln){
+                                    $a = 1;
+                                }
+                            }
+                            if ($a == 0){
+                            array_push($arrr,$ln);
+                            }
+                        }
+                        $this->sendMessage($id,"Ничего не найдено по вашему запросу :(\n"."Доступные категории: " . implode(",",$arrr) ."\n Эти категории можно выбрать на кнопках");
+                    } else {
+                        $message = $arr[array_keys(shuffle($arr))[0]];
+                        $this->sendMessage($id,$message);
+                    }
+                }
+            Wait(100);
+        }
+        
+        });
+        $thread->start();
+    }
+    function snd($text,$id){
+         $content = file_get_contents("json.txt");
+                    $lines = str::lines($content);
+                     $cont = file_get_contents("Users/$id");
+                    $json = json_decode($cont,true);
+                    $json = explode(":::::",$json);
+                    $age = $json[1];
+                    $arr = [];
+                    foreach ($lines as $line){
+                        if ($line["ageRestriction"] > $age){
+                            break;
+                        }
+                        $line = json_decode($line,true);
+                        $name = $line["name"];
+                        $ex = explode("«",$name);
+                        $e = explode(" ",$ex[0]);
+                        foreach ($e as $eee){
+                            if (str::equalsIgnoreCase($eee,$text)){
+                                $eee = trim($eee);
+                                array_push($arr,$line["name"]."\n".$line["description"]."\nСостоится в: " . $line["organization"]["name"]."\n");
+                                break;
+                            }
+                        }
+                        
+                        if (str::equalsIgnoreCase($line["category"]["name"],$text)){
+                            array_push($arr,$line["name"]."\n".$line["description"]."\nСостоится в: " . $line["organization"]["name"]."\n");
+                        } else {
+                            $out = $this->string_compare($line["category"]["name"],$text);
+                            $out = $out * 100;
+                            if ($out > 65){
+                                array_push($arr,$line["name"]."\n".$line["description"]."\nСостоится в: " . $line["organization"]["name"]."\n");
+                            }
+                        }
+                    }
+                    if (!$arr[0]){
+                        $teks = $content = file_get_contents("json.txt");
+                        $lines = str::lines($content);
+                        $arrr = [];
+                        foreach ($lines as $line){
+                            $a = 0;
+                            $line = json_decode($line,true);
+                            $ln = $line["category"]["name"];
+                            foreach ($arrr as $it){
+                                if ($it == $ln){
+                                    $a = 1;
+                                }
+                            }
+                            if ($a == 0){
+                            array_push($arrr,$ln);
+                            }
+                        }
+                        $this->sendMessage($id,"Ничего не найдено по вашему запросу :(\n"."Доступные категории: " . implode(",",$arrr) ."\n Эти категории можно выбрать на кнопках");
+                    } else {
+                        $arr = array_diff($arr,array(''));
+                        $message = $arr[array_keys(shuffle($arr))[0]];
+                        $this->sendMessage($id,$message);
+                    }
+    }
+    function checkGroups($id){
+        $groups = file_get_contents("https://api.vk.com/method/groups.get?user_id=$id&extended=1&count=3&v=5.124&access_token=USER_TOKEN");
+                    $j = json_decode($groups,true);
+                    $count = $j["response"]["count"];
+                    if ($count < 1){
+                        return false;
+                    }
+                    $cicle = ceil($count/1000);
+                    $offset = 0;
+                        $arrrr = [];
+                        $content = file_get_contents("json.txt");
+                        $lines = str::lines($content);
+                        for ($i = 0; $i < $cicle; $i++){
+                            $groups = file_get_contents("https://api.vk.com/method/groups.get?user_id=$id&extended=1&count=1000&offset=$offset&v=5.124&access_token=USER_TOKEN");
+                            $offset + 1000;
+                            $groups = json_decode($groups,true);
+                            foreach ($groups["response"]["items"] as $item){
+                                $exp = explode(" ",$item["name"]);
+                                $expDesk = explode(" ",$item["description"]);
+                                foreach ($lines as $line){
+                                    $line = json_decode($line,true);
+                                    $name = $line["category"]["name"];
+                                    foreach ($exp as $itemExp){
+                                        if (($this->string_compare($itemExp,$name)*100) > 80){
+                                            array_push($arrrr,$name);
+                                            file_put_contents("TST.txt",file_get_contents("TST.txt")."%".$itemExp."!".$name);
+                                        }
+                                    }
+                                    foreach ($expDesk as $itemExpDesk){
+                                        if (($this->string_compare($itemExpDesk,$name)*100) > 80){
+                                            array_push($arrrr,$name);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        var_dump(array_unique($arrrr));
+                        return array_unique($arrrr);
+                    
+    }
+    function sendMessage($id,$message){
+    
+                  $keyboard = file_get_contents("kb.json");
+                $keyboard = urlencode($keyboard);
+                $message = urlencode($message);
+    $out = file_get_contents("https://api.vk.com/method/messages.send?user_id=$id&random_id=0&message=$message&dont_parse_links=0&disable_mentions=0&intent=default&v=5.103&access_token=GROUP_TOKEN&keyboard=$keyboard");
+    $out = json_decode($out,true);
+        uiLater(function()use($id,$message){
+                $message = urldecode($message);
+                $this->listView->items->add("Действие $id - $message");
+            });
+    }
+   function string_compare($str_a, $str_b) 
+    {
+    $length = strlen($str_a);
+    $length_b = strlen($str_b);
+
+    $i = 0;
+    $segmentcount = 0;
+    $segmentsinfo = array();
+    $segment = '';
+    while ($i < $length) 
+    {
+        $char = substr($str_a, $i, 1);
+        if (strpos($str_b, $char) !== FALSE) 
+        {               
+            $segment = $segment.$char;
+            if (strpos($str_b, $segment) !== FALSE) 
+            {
+                $segmentpos_a = $i - strlen($segment) + 1;
+                $segmentpos_b = strpos($str_b, $segment);
+                $positiondiff = abs($segmentpos_a - $segmentpos_b);
+                $posfactor = ($length - $positiondiff) / $length_b; // <-- ?
+                $lengthfactor = strlen($segment)/$length;
+                $segmentsinfo[$segmentcount] = array( 'segment' => $segment, 'score' => ($posfactor * $lengthfactor));
+            } 
+            else 
+            {
+                $segment = '';
+                $i--;
+                $segmentcount++;
+            } 
+        } 
+        else 
+        {
+            $segment = '';
+            $segmentcount++;
+        }
+        $i++;
+    }   
+  
+    $totalscore = array_sum(array_map(function($v) { return $v['score'];  }, $segmentsinfo));
+    return $totalscore;     
+}
+}
