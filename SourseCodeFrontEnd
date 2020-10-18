@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<?import javafx.scene.*?><?import javafx.collections.*?><?import javafx.scene.layout.*?><?import javafx.scene.control.*?><?import javafx.scene.text.*?><?import javafx.scene.image.*?><?import javafx.scene.shape.*?><?import javafx.scene.paint.*?><?import javafx.scene.web.*?><?import javafx.geometry.*?><?import java.lang.*?><?import org.develnext.jphp.ext.javafx.classes.data.*?><?import org.develnext.jphp.ext.javafx.support.*?><?import org.develnext.jphp.ext.javafx.support.control.*?><?import org.develnext.jphp.ext.game.support.*?><copies count="0" ideName="DevelNext" ideNamespace="ide" ideVersion="16.7.0">
+
+  <data>
+
+    <one cursor="DEFAULT" enabled="1" id="listView" visible="1"/>
+
+    <one cursor="DEFAULT" enabled="1" id="label" visible="1"/>
+
+    <one cursor="DEFAULT" enabled="1" id="textArea" visible="1"/>
+
+    <one cursor="DEFAULT" enabled="1" id="labelAlt" visible="1"/>
+
+  </data>
+
+  <binds/>
+
+  <behaviours/>
+
+  <node>
+
+    <ListViewEx AnchorPane.bottomAnchor="136" AnchorPane.leftAnchor="8" AnchorPane.rightAnchor="8" AnchorPane.topAnchor="32" editable="false" fixedCellSize="-1" focusTraversable="true" id="listView" layoutX="8" layoutY="32" prefHeight="312" prefWidth="624" styleClass="list-view ">
+
+      <items xmlns:fx="http://javafx.com/fxml">
+
+        <FXCollections fx:factory="observableArrayList"/>
+
+      </items>
+
+    </ListViewEx>
+
+  </node>
+
+  <node>
+
+    <LabelEx AnchorPane.leftAnchor="8" AnchorPane.rightAnchor="8" AnchorPane.topAnchor="8" alignment="CENTER_LEFT" autoSize="false" contentDisplay="LEFT" ellipsisString="..." focusTraversable="false" graphicTextGap="4" id="label" layoutX="8" layoutY="8" prefHeight="21" prefWidth="624" styleClass="label " text="Лог:" textAlignment="LEFT" underline="false" wrapText="false">
+
+      <font>
+
+        <Font name="System Regular" size="15"/>
+
+      </font>
+
+    </LabelEx>
+
+  </node>
+
+  <node>
+
+    <TextArea editable="true" focusTraversable="true" id="textArea" layoutX="8" layoutY="376" prefColumnCount="40" prefHeight="96" prefWidth="624" promptText="" styleClass="text-input text-area " text="" wrapText="false">
+
+      <font>
+
+        <Font name="System Regular" size="15"/>
+
+      </font>
+
+    </TextArea>
+
+  </node>
+
+  <node>
+
+    <LabelEx alignment="CENTER_LEFT" autoSize="false" contentDisplay="LEFT" ellipsisString="..." focusTraversable="false" graphicTextGap="4" id="labelAlt" layoutX="8" layoutY="352" prefHeight="21" prefWidth="216" styleClass="label " text="Системные уведомления:" textAlignment="LEFT" underline="false" wrapText="false">
+
+      <font>
+
+        <Font name="System Regular" size="15"/>
+
+      </font>
+
+    </LabelEx>
+
+  </node>
+
+</copies>
+
